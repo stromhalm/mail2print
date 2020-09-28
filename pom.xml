@@ -136,7 +136,7 @@
             <id>central</id>
             <name>Maven Repository Switchboard</name>
             <layout>default</layout>
-            <url>http://repo.maven.apache.org/maven2</url>
+            <url>https://repo.maven.apache.org/maven2</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -144,6 +144,6 @@
         <repository>
             <id>projectlombok.org</id>
             <url>https://projectlombok.org/edge-releases</url>
-        </repository>     
+        </repository>
     </repositories>
 </project>
