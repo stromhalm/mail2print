@@ -1,9 +1,0 @@
-META-INF/extensions.idx
-de/upstart_it/mail2print/converter/OfficeConverter.class
-de/upstart_it/mail2print/converter/ImageConverter.class
-de/upstart_it/mail2print/Main$1.class
-de/upstart_it/mail2print/converter/ImageConverter$Size.class
-de/upstart_it/mail2print/Main.class
-de/upstart_it/mail2print/Main$2.class
-de/upstart_it/mail2print/PrintHelper.class
-de/upstart_it/mail2print/ConverterPlugin.class
