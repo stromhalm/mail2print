@@ -22,7 +22,7 @@ public class PrintHelper {
     
     @Getter
     @Setter
-    private Scaling scaling = Scaling.SCALE_TO_FIT;
+    private Scaling scaling = Scaling.ACTUAL_SIZE;
     
     public Scaling[] getAvailableScalings() {
         return Scaling.values();

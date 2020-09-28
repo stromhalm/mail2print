@@ -4,6 +4,7 @@ import de.upstart_it.mail2print.ConverterPlugin;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
@@ -45,6 +46,11 @@ public class ImageConverter implements ConverterPlugin {
     static class Size {
         final double widthInCm;
         final double heightInCmt;
+
+        Size(double widthInCm, double heightInCmt) {
+            this.widthInCm = widthInCm;
+            this.heightInCmt = heightInCmt;
+        }
     }
     
     Pattern pSizeInCm = Pattern.compile(".*?(\\d+[.,]?\\d*) ?x ?(\\d+[.,]?\\d*) ?([cm]m).*?");
@@ -60,7 +66,7 @@ public class ImageConverter implements ConverterPlugin {
             }
         }
         catch (NumberFormatException e) {
-            log.warning(e.getLocalizedMessage());
+            Logger.getGlobal().warning(e.getLocalizedMessage());
         }
         return null;
     }
