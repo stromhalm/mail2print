@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Annotation profile for Mail2Print" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processor name="org.pf4j.processor.ExtensionAnnotationProcessor" />
+        <processor name="lombok.launch.AnnotationProcessorHider$AnnotationProcessor" />
+        <module name="Mail2Print" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="Mail2Print" target="8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
