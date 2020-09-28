@@ -10,6 +10,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import javax.activation.DataSource;
 import javax.mail.Flags;
@@ -144,11 +145,11 @@ public class Main {
                 return new SingletonExtensionFactory();
             }
         };
-        log.info("loading Plugins...");
+        Logger.getGlobal().info("loading Plugins...");
         pluginManager.loadPlugins();
         pluginManager.startPlugins();
         getConverter().forEach((plugin) -> {
-            log.log(Level.INFO, "Plugin {0} loaded", plugin.getName());
+            Logger.getGlobal().log(Level.INFO, "Plugin {0} loaded", plugin.getName());
         });
     }
 
@@ -167,35 +168,41 @@ public class Main {
     }
 
     private boolean print(String subject, final DataSource ds) throws IOException, PrintException {
-        String contentType = ds.getContentType().toLowerCase();
-        String filename = ds.getName().toLowerCase();
-        byte[] data = null;
-        if (filename.endsWith(".pdf") || contentType.contains("application/pdf")) {
-            log.log(Level.FINE, "Printing {0} with type {1}", new Object[]{ds.getName(), ds.getContentType()});
-            data = IOUtils.toByteArray(ds.getInputStream());
-        } else {
-            for (ConverterPlugin plugin : getConverter().toArray(ConverterPlugin[]::new)) {
-                if (plugin.canConvertFile(contentType, filename, subject)) {
-                    try {
-                        log.log(Level.INFO, "Using {0} to convert {1}", new Object[]{plugin.getName(), filename});
-                        data = plugin.convertToPdf(ds.getInputStream(), contentType, filename, subject);
-                        break;
-                    } catch (Exception e) {
-                        log.severe(e.getLocalizedMessage());
+
+        try {
+            String contentType = ds.getContentType().toLowerCase();
+            String filename = ds.getName().toLowerCase();
+            byte[] data = null;
+            if (filename.endsWith(".pdf") || contentType.contains("application/pdf")) {
+                Logger.getGlobal().log(Level.FINE, "Printing {0} with type {1}", new Object[]{ds.getName(), ds.getContentType()});
+                data = IOUtils.toByteArray(ds.getInputStream());
+            } else {
+                for (ConverterPlugin plugin : getConverter().toArray(ConverterPlugin[]::new)) {
+                    if (plugin.canConvertFile(contentType, filename, subject)) {
+                        try {
+                            Logger.getGlobal().log(Level.INFO, "Using {0} to convert {1}", new Object[]{plugin.getName(), filename});
+                            data = plugin.convertToPdf(ds.getInputStream(), contentType, filename, subject);
+                            break;
+                        } catch (Exception e) {
+                            Logger.getGlobal().severe(e.getLocalizedMessage());
+                        }
                     }
                 }
+                if (data == null) {
+                    Logger.getGlobal().log(Level.INFO, "Skipping unsupported {0} with type {1}", new Object[]{ds.getName(), ds.getContentType()});
+                    return false;
+                }
             }
-            if (data == null) {
-                log.log(Level.INFO, "Skipping unsupported {0} with type {1}", new Object[]{ds.getName(), ds.getContentType()});
-                return false;
-            }
+            printHelper.printPDF(printer, data, null, null);
+        } catch (Exception e) {
+            Logger.getGlobal().log(Level.WARNING, "General printing error");
         }
-        printHelper.printPDF(printer, data, null, null);
+
         return true;
     }
 
     private void process(Message msg) throws Exception {
-        log.log(Level.FINE, "processing {0}", msg.getSubject());
+        Logger.getGlobal().log(Level.FINE, "processing {0}", msg.getSubject());
         boolean processed = false;
         for (DataSource e : getAttachments((MimeMessage) msg)) {
             if (output != null) {
@@ -226,7 +233,7 @@ public class Main {
     private void processUnreadMessages(Folder folder) throws MessagingException, Exception {
         // Fetch unseen messages from inbox folder
         Message[] messages = folder.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
-        log.log(Level.INFO, "Processing {0} unread messages...", messages.length);
+        Logger.getGlobal().log(Level.INFO, "Processing {0} unread messages...", messages.length);
         // Sort messages from recent to oldest
         Arrays.sort(messages, (m1, m2) -> {
             try {
@@ -242,14 +249,14 @@ public class Main {
             try {
                 folder.expunge();
             } catch (MessagingException ex) {
-                log.log(Level.SEVERE, null, ex);
+                Logger.getGlobal().log(Level.SEVERE, null, ex);
             }
         }
     }
 
     private void run() throws MessagingException, Exception {
         // Connect
-        log.log(Level.INFO, "connecting to {0}", hostname);
+        Logger.getGlobal().log(Level.INFO, "connecting to {0}", hostname);
         store.connect(hostname, user, password);
 
         IMAPFolder folder = (IMAPFolder) store.getFolder("INBOX");
@@ -257,17 +264,17 @@ public class Main {
         Thread keepAliveThread = new Thread() {
             @Override
             public void run() {
-                log.fine("keep alive started...");
+                Logger.getGlobal().fine("keep alive started...");
                 while (keepRunning && !Thread.interrupted()) {
                     try {
                         Thread.sleep(120000);//2min
-                        log.fine("Checking if connection is alive...");
+                        Logger.getGlobal().fine("Checking if connection is alive...");
                         folder.getNewMessageCount();
                     } catch (InterruptedException e) {
-                        log.fine("Stopping keep alive");
+                        Logger.getGlobal().fine("Stopping keep alive");
                         // Ignore, just aborting the thread...
                     } catch (MessagingException ex) {
-                        log.log(Level.SEVERE, null, ex);
+                        Logger.getGlobal().log(Level.SEVERE, null, ex);
                         
                     }
                 }
@@ -278,19 +285,19 @@ public class Main {
         }
         while (!Thread.interrupted()) {
             if (!folder.isOpen()) {
-                log.info("Connection was lost, reestablish....");
+                Logger.getGlobal().info("Connection was lost, reestablish....");
                 folder.open(Folder.READ_WRITE);
             }
             processUnreadMessages(folder);
             if (!idleMode) {
                 break;
             }
-            log.info("Waiting for new messages (IDLE)...");
+            Logger.getGlobal().info("Waiting for new messages (IDLE)...");
             try {
                 folder.idle(true);
             }
             catch (Exception e) {
-                log.info("Idle Exception "+e.getLocalizedMessage());
+                Logger.getGlobal().info("Idle Exception "+e.getLocalizedMessage());
             }
         }
         if (idleMode && keepAliveThread.isAlive()) {
@@ -309,20 +316,20 @@ public class Main {
             instance = new Main(args);
             instance.run();
         } catch (MessagingException ex) {
-            log.log(Level.SEVERE, null, ex);
+            Logger.getGlobal().log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            log.log(Level.SEVERE, null, ex);
+            Logger.getGlobal().log(Level.SEVERE, null, ex);
         } catch (ParseException ex) {
             //output is already done, just exit
             System.exit(1);
         } catch (Exception ex) {
-            log.log(Level.SEVERE, null, ex);
+            Logger.getGlobal().log(Level.SEVERE, null, ex);
         } finally {
             if (instance != null) {
                 try {
                     instance.shutdown();
                 } catch (MessagingException ex) {
-                    log.log(Level.SEVERE, null, ex);
+                    Logger.getGlobal().log(Level.SEVERE, null, ex);
                 }
             }
         }
