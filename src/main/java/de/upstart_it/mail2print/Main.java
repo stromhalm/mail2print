@@ -134,6 +134,7 @@ public class Main {
         es = Executors.newCachedThreadPool();
         Properties props = System.getProperties();
         props.setProperty("mail.imaps.timeout", "10000");
+        props.setProperty("mail.imaps.ssl.trust", "*");
         // Get a Session object
         session = Session.getInstance(props, null);
         // Get a Store object
