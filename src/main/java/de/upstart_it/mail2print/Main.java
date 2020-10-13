@@ -13,14 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import javax.activation.DataSource;
-import javax.mail.Flags;
+import javax.mail.*;
 import javax.mail.Flags.Flag;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.NoSuchProviderException;
-import javax.mail.Session;
-import javax.mail.Store;
 import javax.mail.internet.MimeMessage;
 import javax.mail.search.FlagTerm;
 import javax.print.PrintException;
@@ -275,8 +269,7 @@ public class Main {
                         Logger.getGlobal().fine("Stopping keep alive");
                         // Ignore, just aborting the thread...
                     } catch (MessagingException ex) {
-                        Logger.getGlobal().log(Level.SEVERE, null, ex);
-                        
+                        Logger.getGlobal().info("Connection error: " + ex.getMessage());
                     }
                 }
             }
@@ -287,7 +280,11 @@ public class Main {
         while (!Thread.interrupted()) {
             if (!folder.isOpen()) {
                 Logger.getGlobal().info("Connection was lost, reestablish....");
-                folder.open(Folder.READ_WRITE);
+                try {
+                    folder.open(Folder.READ_WRITE);
+                } catch (MessagingException e) {
+                    Logger.getGlobal().info("Connection error: " + e.getMessage());
+                }
             }
             processUnreadMessages(folder);
             if (!idleMode) {
